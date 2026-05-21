@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code Desktop × 數位互動教材開發指南</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&family=DM+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+
+  :root {
+    --bg:    #fafaf8;
+    --bg2:   #f4f1ec;
+    --bg3:   #ede9e2;
+    --card:  #ffffff;
+    --border:#ddd8ce;
+    --border2:#e8e4dc;
+    --ink:   #1a1612;
+    --ink2:  #5a5248;
+    --ink3:  #9a9088;
+    --brand: #c75b2e;       /* warm terracotta */
+    --brand2:#e8834f;
+    --green: #2d7a4f;
+    --green2:#e8f5ee;
+    --blue:  #2558a8;
+    --blue2: #e8f0fb;
+    --amber: #b07d16;
+    --amber2:#fdf3dc;
+    --red2:  #fdecea;
+    --red:   #c0392b;
+    --shadow: 0 2px 12px rgba(0,0,0,.07);
+    --shadow2:0 4px 24px rgba(0,0,0,.1);
+    --radius:12px;
+    --code-bg:#1e1b18;
+    --code-fg:#e8e0d4;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 15px;
+    line-height: 1.75;
+  }
+
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(250,250,248,.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 2rem; height: 54px; gap: 1rem;
+  }
+  .nav-logo {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 700; font-size: .95rem; color: var(--brand);
+    display: flex; align-items: center; gap: 6px; margin-right: auto;
+  }
+  .nav-logo span { color: var(--ink3); font-weight: 400; }
+  .nav-badge {
+    font-size: .7rem; padding: 2px 8px; border-radius: 99px;
+    background: var(--amber2); color: var(--amber);
+    border: 1px solid #f0d890; font-family: 'JetBrains Mono', monospace;
+  }
+  .nav-links { display: flex; gap: 2px; }
+  .nav-links a {
+    color: var(--ink2); text-decoration: none;
+    font-size: .8rem; padding: 5px 12px; border-radius: 7px;
+    transition: all .2s;
+  }
+  .nav-links a:hover { background: var(--bg2); color: var(--ink); }
+
+  /* ── LAYOUT ── */
+  .container { max-width: 880px; margin: 0 auto; padding: 0 1.5rem; }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 110px 0 70px;
+    background: linear-gradient(160deg, var(--bg) 60%, var(--bg2) 100%);
+    border-bottom: 1px solid var(--border);
+    position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; top: -40px; right: -80px;
+    width: 500px; height: 500px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(199,91,46,.07) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-eyebrow {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: .75rem; color: var(--brand); font-family: 'DM Sans', sans-serif;
+    font-weight: 600; text-transform: uppercase; letter-spacing: .08em;
+    margin-bottom: 1rem;
+    animation: fadeUp .5s ease both;
+  }
+  .hero-eyebrow::before { content: ''; width: 20px; height: 2px; background: var(--brand); }
+  .hero h1 {
+    font-size: clamp(1.8rem, 4.5vw, 3rem);
+    font-weight: 900; line-height: 1.15;
+    letter-spacing: -.025em; color: var(--ink);
+    animation: fadeUp .5s .08s ease both;
+  }
+  .hero h1 em { font-style: normal; color: var(--brand); }
+  .hero-desc {
+    margin-top: 1rem; font-size: 1rem; color: var(--ink2);
+    max-width: 540px;
+    animation: fadeUp .5s .15s ease both;
+  }
+  .hero-tags {
+    margin-top: 1.5rem; display: flex; flex-wrap: wrap; gap: 7px;
+    animation: fadeUp .5s .2s ease both;
+  }
+  .tag {
+    font-size: .74rem; padding: 4px 12px; border-radius: 99px;
+    border: 1px solid; font-family: 'DM Sans', sans-serif; font-weight: 600;
+  }
+  .tag-brand { border-color: var(--brand); color: var(--brand); background: #fdf2ee; }
+  .tag-green { border-color: var(--green); color: var(--green); background: var(--green2); }
+  .tag-blue  { border-color: var(--blue);  color: var(--blue);  background: var(--blue2); }
+  .tag-amber { border-color: var(--amber); color: var(--amber); background: var(--amber2); }
+
+  .hero-compare {
+    margin-top: 2rem; display: flex; gap: 1rem; flex-wrap: wrap;
+    animation: fadeUp .5s .25s ease both;
+  }
+  .compare-pill {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 8px 14px; font-size: .82rem;
+    box-shadow: var(--shadow);
+  }
+  .compare-pill .icon { font-size: 1.1rem; }
+  .compare-pill strong { font-weight: 700; color: var(--ink); }
+  .compare-pill span { color: var(--ink2); }
+
+  @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:none} }
+
+  /* ── SECTION ── */
+  section { padding: 60px 0; }
+  section + section { border-top: 1px solid var(--border2); }
+  .section-kicker {
+    font-family: 'DM Sans', sans-serif; font-weight: 700;
+    font-size: .7rem; text-transform: uppercase; letter-spacing: .1em;
+    color: var(--brand); margin-bottom: .5rem;
+  }
+  .section-title { font-size: 1.5rem; font-weight: 800; margin-bottom: .3rem; }
+  .section-sub { color: var(--ink2); font-size: .88rem; margin-bottom: 2rem; }
+
+  /* ── COMPARE TABLE ── */
+  .compare-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .84rem; }
+  .compare-table th {
+    background: var(--bg2); border: 1px solid var(--border);
+    padding: 9px 14px; font-family: 'DM Sans', sans-serif;
+    font-weight: 700; font-size: .75rem; text-align: left; color: var(--ink2);
+  }
+  .compare-table td { border: 1px solid var(--border2); padding: 9px 14px; color: var(--ink2); }
+  .compare-table tr:hover td { background: var(--bg2); }
+  .yes { color: var(--green); font-weight: 700; }
+  .no  { color: var(--ink3); }
+
+  /* ── STEP CARDS ── */
+  .steps { display: flex; flex-direction: column; gap: 1.2rem; }
+  .step-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+    box-shadow: var(--shadow); transition: box-shadow .2s, border-color .2s;
+  }
+  .step-card:hover { box-shadow: var(--shadow2); border-color: var(--brand2); }
+
+  .step-header {
+    display: flex; align-items: center; gap: 1rem;
+    padding: 1.1rem 1.4rem; cursor: pointer; user-select: none;
+  }
+  .step-num {
+    width: 38px; height: 38px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: .9rem; font-family: 'DM Sans', sans-serif;
+    flex-shrink: 0;
+  }
+  .step-meta { flex: 1; }
+  .step-title { font-size: .97rem; font-weight: 700; }
+  .step-desc  { font-size: .76rem; color: var(--ink3); margin-top: 2px; }
+  .step-caret { font-size: .85rem; color: var(--ink3); transition: transform .3s; }
+  .step-card.open .step-caret { transform: rotate(180deg); }
+
+  .step-body {
+    max-height: 0; overflow: hidden;
+    transition: max-height .4s ease, padding .3s;
+    padding: 0 1.4rem;
+  }
+  .step-card.open .step-body { max-height: 3000px; padding-bottom: 1.4rem; }
+
+  /* ── PROSE ── */
+  .step-body p { color: var(--ink2); margin-bottom: .9rem; font-size: .88rem; }
+  .step-body ol, .step-body ul { color: var(--ink2); padding-left: 1.4rem; margin-bottom: .9rem; }
+  .step-body li { margin-bottom: .35rem; font-size: .88rem; }
+
+  /* ── INFO BOXES ── */
+  .info {
+    border-radius: 9px; padding: .9rem 1.1rem; margin: .8rem 0;
+    border-left: 3px solid; font-size: .85rem;
+  }
+  .info-brand  { background: #fdf2ee; border-color: var(--brand); }
+  .info-green  { background: var(--green2); border-color: var(--green); }
+  .info-blue   { background: var(--blue2); border-color: var(--blue); }
+  .info-amber  { background: var(--amber2); border-color: var(--amber); }
+  .info strong { display: block; margin-bottom: .35rem; color: var(--ink); font-size: .88rem; }
+  .info p, .info li { color: var(--ink2); margin-bottom: .2rem; }
+  .info ul { padding-left: 1.2rem; }
+
+  /* ── CODE ── */
+  .code-wrap {
+    background: var(--code-bg); border-radius: 10px; overflow: hidden;
+    margin: .8rem 0; border: 1px solid #2e2a25;
+  }
+  .code-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 7px 14px; background: #15120e; border-bottom: 1px solid #2e2a25;
+  }
+  .code-dots { display: flex; gap: 5px; }
+  .cd { width: 11px; height: 11px; border-radius: 50%; }
+  .cd-r { background: #ff5f57; } .cd-y { background: #febc2e; } .cd-g { background: #28c840; }
+  .code-lang { font-family: 'JetBrains Mono', monospace; font-size: .68rem; color: #6e6860; }
+  .copy-btn {
+    background: none; border: 1px solid #3a352e; color: #8a8078;
+    padding: 2px 10px; border-radius: 5px; cursor: pointer;
+    font-size: .68rem; font-family: 'JetBrains Mono', monospace; transition: all .2s;
+  }
+  .copy-btn:hover { border-color: var(--brand2); color: var(--brand2); }
+  .copy-btn.ok { border-color: var(--green); color: var(--green); }
+  pre { padding: .9rem 1.1rem; overflow-x: auto; font-family: 'JetBrains Mono', monospace; font-size: .79rem; line-height: 1.65; }
+  .ct { color: var(--code-fg); }
+  .cc { color: #6e6860; }
+  .cg { color: #7fbf7f; }
+  .cy { color: #d4a656; }
+  .co { color: #d48c5a; }
+  .cb { color: #7fa8d4; }
+
+  /* ── TABLE ── */
+  .tbl-wrap { overflow-x: auto; margin: .8rem 0; border-radius: 10px; border: 1px solid var(--border); }
+  table.tbl { width: 100%; border-collapse: collapse; font-size: .82rem; }
+  table.tbl th { background: var(--bg2); padding: 9px 14px; font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: .76rem; text-align: left; color: var(--ink2); border-bottom: 1px solid var(--border); }
+  table.tbl td { padding: 8px 14px; border-top: 1px solid var(--border2); color: var(--ink2); vertical-align: top; }
+  table.tbl tr:hover td { background: var(--bg2); }
+
+  /* ── TABS (Permission modes) ── */
+  .mode-tabs { display: flex; gap: 8px; margin: .8rem 0; flex-wrap: wrap; }
+  .mode-tab {
+    padding: 7px 16px; border-radius: 8px; cursor: pointer; font-size: .82rem;
+    border: 1.5px solid var(--border); background: var(--card); color: var(--ink2);
+    font-family: 'DM Sans', sans-serif; font-weight: 600; transition: all .2s;
+  }
+  .mode-tab.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+  .mode-content { display: none; }
+  .mode-content.active { display: block; animation: fadeUp .25s ease; }
+
+  /* ── INTERFACE DIAGRAM ── */
+  .ui-diagram {
+    background: var(--code-bg); border-radius: 12px; padding: 1.4rem;
+    border: 1px solid #2e2a25; margin: .8rem 0; position: relative;
+    overflow: hidden;
+  }
+  .ui-diagram::before {
+    content: 'Desktop App 介面示意';
+    position: absolute; top: 10px; right: 14px;
+    font-size: .68rem; color: #6e6860; font-family: 'JetBrains Mono', monospace;
+  }
+  .ui-tabs-bar {
+    display: flex; gap: 3px; margin-bottom: 12px;
+    background: #15120e; border-radius: 7px; padding: 4px; width: fit-content;
+  }
+  .ui-tab {
+    padding: 5px 14px; border-radius: 5px; font-size: .72rem;
+    font-family: 'DM Sans', sans-serif; font-weight: 600; color: #6e6860;
+    cursor: default;
+  }
+  .ui-tab.active { background: var(--brand); color: #fff; }
+  .ui-body { display: flex; gap: 10px; min-height: 180px; }
+  .ui-sidebar {
+    width: 130px; background: #15120e; border-radius: 8px; padding: 8px;
+    flex-shrink: 0;
+  }
+  .ui-sidebar-title { font-size: .6rem; color: #6e6860; font-family: 'JetBrains Mono', monospace; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .08em; }
+  .ui-session {
+    padding: 5px 8px; border-radius: 5px; font-size: .64rem;
+    font-family: 'JetBrains Mono', monospace; margin-bottom: 3px; cursor: default;
+  }
+  .ui-session.active { background: rgba(199,91,46,.2); color: var(--brand2); }
+  .ui-session.idle { color: #6e6860; }
+  .ui-session.running::before { content: '● '; color: var(--brand2); font-size: .5rem; animation: blink 1s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+  .ui-main { flex: 1; background: #15120e; border-radius: 8px; padding: 10px; display: flex; flex-direction: column; }
+  .ui-chat { flex: 1; font-size: .64rem; font-family: 'JetBrains Mono', monospace; }
+  .ui-msg { margin-bottom: 6px; }
+  .ui-msg.user { color: var(--code-fg); }
+  .ui-msg.ai { color: #7fbf7f; }
+  .ui-input-area { margin-top: 8px; }
+  .ui-input {
+    width: 100%; background: #1e1b18; border: 1px solid #3a352e;
+    border-radius: 6px; padding: 6px 10px; color: var(--code-fg);
+    font-size: .62rem; font-family: 'JetBrains Mono', monospace;
+  }
+  .ui-toolbar { display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap; }
+  .ui-pill {
+    padding: 2px 8px; border-radius: 99px; font-size: .58rem;
+    font-family: 'JetBrains Mono', monospace; border: 1px solid;
+  }
+  .ui-pill-mode { border-color: var(--brand); color: var(--brand2); }
+  .ui-pill-model { border-color: #3a352e; color: #8a8078; }
+  .ui-diff {
+    margin-top: 8px; background: #1e1b18; border-radius: 6px; padding: 7px;
+    font-family: 'JetBrains Mono', monospace; font-size: .6rem;
+  }
+  .diff-add { color: #7fbf7f; } .diff-del { color: #cf6679; }
+  .diff-meta { color: #6e6860; }
+
+  /* ── PROMPT BUILDER ── */
+  .pb {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.4rem;
+    box-shadow: var(--shadow); margin: 1rem 0;
+  }
+  .pb-title { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: .85rem; color: var(--brand); margin-bottom: 1rem; }
+  .pb-row { display: flex; gap: .8rem; flex-wrap: wrap; margin-bottom: .7rem; }
+  .pb-group { flex: 1; min-width: 170px; }
+  .pb-group label { display: block; font-size: .73rem; color: var(--ink3); margin-bottom: 3px; font-weight: 500; }
+  .pb-group input, .pb-group select {
+    width: 100%; background: var(--bg); border: 1px solid var(--border);
+    color: var(--ink); padding: 7px 10px; border-radius: 7px;
+    font-size: .82rem; font-family: 'Noto Sans TC', sans-serif; outline: none;
+    transition: border-color .2s;
+  }
+  .pb-group input:focus, .pb-group select:focus { border-color: var(--brand2); }
+  .pb-checks { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: .9rem; }
+  .pb-check {
+    display: flex; align-items: center; gap: 5px;
+    background: var(--bg); border: 1px solid var(--border);
+    padding: 4px 11px; border-radius: 99px; cursor: pointer;
+    font-size: .76rem; color: var(--ink2); transition: all .2s;
+  }
+  .pb-check input { display: none; }
+  .pb-check:has(input:checked) { border-color: var(--brand); color: var(--brand); background: #fdf2ee; }
+  .pb-output {
+    background: var(--code-bg); border: 1px solid #2e2a25;
+    border-radius: 8px; padding: .9rem 1rem; font-size: .78rem;
+    color: var(--code-fg); font-family: 'JetBrains Mono', monospace;
+    line-height: 1.7; white-space: pre-wrap; min-height: 90px;
+  }
+  .pb-footer { display: flex; justify-content: flex-end; margin-top: .6rem; }
+  .btn-brand {
+    background: var(--brand); color: #fff; padding: 8px 18px;
+    border-radius: 8px; border: none; cursor: pointer;
+    font-size: .82rem; font-weight: 700; font-family: 'Noto Sans TC', sans-serif;
+    transition: all .2s;
+  }
+  .btn-brand:hover { background: var(--brand2); transform: translateY(-1px); }
+
+  /* ── CHECKLIST ── */
+  .cl { list-style: none; padding: 0; }
+  .cl li {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 9px 0; border-bottom: 1px solid var(--border2);
+    font-size: .87rem; cursor: pointer;
+  }
+  .cl li:last-child { border-bottom: none; }
+  .cl-box {
+    width: 22px; height: 22px; border-radius: 6px; flex-shrink: 0;
+    border: 2px solid var(--border); transition: all .2s;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .7rem; margin-top: 1px;
+  }
+  .cl-box.done { background: var(--green); border-color: var(--green); color: #fff; }
+  .cl li span { color: var(--ink2); flex: 1; }
+  .cl li.done span { text-decoration: line-through; color: var(--ink3); }
+
+  /* ── CMD GRID ── */
+  .cmd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: .7rem; }
+  .cmd-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 9px; padding: .85rem 1rem;
+    box-shadow: var(--shadow); transition: box-shadow .2s;
+  }
+  .cmd-card:hover { box-shadow: var(--shadow2); }
+  .cmd-card .cmd { font-family: 'JetBrains Mono', monospace; font-size: .8rem; color: var(--brand); font-weight: 600; }
+  .cmd-card .desc { font-size: .74rem; color: var(--ink3); margin-top: 3px; }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--bg2); border-top: 1px solid var(--border);
+    padding: 2rem 0; text-align: center;
+    color: var(--ink3); font-size: .78rem;
+  }
+  footer a { color: var(--brand); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  /* ── MISC ── */
+  .fade-in { opacity: 0; transform: translateY(12px); transition: .4s; }
+  .fade-in.v { opacity: 1; transform: none; }
+  code { font-family: 'JetBrains Mono', monospace; font-size: .85em; background: var(--bg2); padding: 1px 5px; border-radius: 4px; color: var(--brand); }
+
+  @media (max-width: 640px) {
+    .nav-links { display: none; }
+    .hero { padding: 90px 0 50px; }
+    .ui-body { flex-direction: column; }
+    .ui-sidebar { width: 100%; }
+    .pb-row { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Claude Code <span>Desktop</span> × 互動教材</div>
+  <div class="nav-badge">GUI 版</div>
+  <div class="nav-links">
+    <a href="#compare">與 CLI 比較</a>
+    <a href="#interface">介面</a>
+    <a href="#steps">步驟</a>
+    <a href="#prompt">提示產生器</a>
+    <a href="#quickref">速查</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-eyebrow">Desktop 桌面版指南</div>
+    <h1>用 <em>Claude Code Desktop</em><br>打造數位互動教材</h1>
+    <p class="hero-desc">圖形化介面 · 無需終端機 · 視覺化差異審查 · 並行工作 Session<br>從下載安裝到 GitHub Pages 上線的完整流程</p>
+    <div class="hero-tags">
+      <span class="tag tag-brand">Desktop GUI 操作</span>
+      <span class="tag tag-green">視覺 Diff 審查</span>
+      <span class="tag tag-blue">並行 Session</span>
+      <span class="tag tag-amber">GitHub Pages 部署</span>
+    </div>
+    <div class="hero-compare">
+      <div class="compare-pill">
+        <span class="icon">🖥️</span>
+        <div><strong>Desktop App</strong><span> — 本頁主題</span></div>
+      </div>
+      <div style="display:flex;align-items:center;color:var(--ink3);font-size:.85rem">vs</div>
+      <div class="compare-pill" style="opacity:.6">
+        <span class="icon">⌨️</span>
+        <div><strong>CLI 終端機版</strong><span> — 另一份指南</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARE -->
+<section id="compare">
+  <div class="container">
+    <div class="section-kicker">桌面版 vs 終端機版</div>
+    <h2 class="section-title fade-in">選擇適合你的方式</h2>
+    <p class="section-sub fade-in">兩個版本功能相同，差異在操作方式與部分獨有功能</p>
+    <div class="fade-in" style="overflow-x:auto;border-radius:12px;border:1px solid var(--border)">
+      <table class="compare-table">
+        <tr>
+          <th>項目</th>
+          <th>🖥️ Desktop App（本頁）</th>
+          <th>⌨️ CLI 終端機版</th>
+        </tr>
+        <tr><td>操作方式</td><td>圖形介面，滑鼠點擊</td><td>鍵盤指令</td></tr>
+        <tr><td>適合對象</td><td>所有人，含不熟指令者</td><td>有終端機基礎者</td></tr>
+        <tr><td>多工 Session</td><td class="yes">✓ 側邊欄統一管理</td><td>手動開多個終端機</td></tr>
+        <tr><td>Diff 審查</td><td class="yes">✓ 視覺化逐行接受/拒絕</td><td>純文字 git diff</td></tr>
+        <tr><td>App 即時預覽</td><td class="yes">✓ 內嵌瀏覽器</td><td>需另開瀏覽器</td></tr>
+        <tr><td>PR 監控</td><td class="yes">✓ GitHub PR 狀態</td><td>需另行查看</td></tr>
+        <tr><td>Plan 模式</td><td class="yes">✓ 先看計畫再執行</td><td class="yes">✓ 也有</td></tr>
+        <tr><td>Linux 支援</td><td class="no">✗ 不支援</td><td class="yes">✓ 完整支援</td></tr>
+        <tr><td>自動更新</td><td>手動更新</td><td class="yes">✓ 原生安裝器自動</td></tr>
+        <tr><td>不需額外安裝</td><td class="yes">✓ 內建 Claude Code</td><td>需安裝安裝器或 npm</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- INTERFACE -->
+<section id="interface" style="background:var(--bg2)">
+  <div class="container">
+    <div class="section-kicker">介面說明</div>
+    <h2 class="section-title fade-in">Desktop App 三分頁介面</h2>
+    <p class="section-sub fade-in">教材開發主要在 Code 分頁進行</p>
+
+    <!-- 介面示意圖 -->
+    <div class="ui-diagram fade-in">
+      <div class="ui-tabs-bar">
+        <div class="ui-tab">Chat</div>
+        <div class="ui-tab">Cowork</div>
+        <div class="ui-tab active">Code ←</div>
+      </div>
+      <div class="ui-body">
+        <div class="ui-sidebar">
+          <div class="ui-sidebar-title">Sessions</div>
+          <div class="ui-session active running">光合作用教材</div>
+          <div class="ui-session idle">太陽系教材</div>
+          <div class="ui-session idle">水循環教材</div>
+          <div style="margin-top:8px;font-size:.58rem;color:#6e6860;font-family:'JetBrains Mono',monospace;cursor:pointer">+ 新增 Session</div>
+        </div>
+        <div class="ui-main">
+          <div class="ui-chat">
+            <div class="ui-msg user">▷ 請幫我設計光合作用互動教材…</div>
+            <div class="ui-msg ai">✓ 建立 index.html，包含動畫展示與 5 題測驗</div>
+            <div class="ui-msg ai">✓ 新增 SVG 葉片動畫</div>
+            <div class="ui-msg ai">✓ 加入拖曳配對功能</div>
+          </div>
+          <div class="ui-diff">
+            <div class="diff-meta">index.html　+48 -3</div>
+            <div class="diff-add">+ &lt;section id="quiz"&gt;</div>
+            <div class="diff-add">+   &lt;!-- 互動測驗 --&gt;</div>
+            <div class="diff-del">- &lt;!-- 待補充 --&gt;</div>
+          </div>
+          <div class="ui-input-area">
+            <div class="ui-input">在此輸入修改需求…</div>
+            <div class="ui-toolbar">
+              <span class="ui-pill ui-pill-mode">Ask 模式 ▾</span>
+              <span class="ui-pill ui-pill-model">Sonnet ▾</span>
+              <span class="ui-pill ui-pill-mode" style="border-color:#7fbf7f;color:#7fbf7f">@index.html</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fade-in" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.8rem;margin-top:1.2rem">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem;box-shadow:var(--shadow)">
+        <div style="font-size:1.3rem;margin-bottom:.4rem">💬</div>
+        <div style="font-weight:700;font-size:.9rem;margin-bottom:.3rem">Chat 分頁</div>
+        <div style="font-size:.8rem;color:var(--ink2)">一般對話，無法存取本機檔案，類似 claude.ai 網頁版。</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem;box-shadow:var(--shadow)">
+        <div style="font-size:1.3rem;margin-bottom:.4rem">🤖</div>
+        <div style="font-weight:700;font-size:.9rem;margin-bottom:.3rem">Cowork 分頁</div>
+        <div style="font-size:.8rem;color:var(--ink2)">雲端 VM 背景任務（整理文件等），可在 App 關閉後繼續執行。教材開發不在此。</div>
+      </div>
+      <div style="background:var(--brand);border:1px solid var(--brand);border-radius:10px;padding:1rem;box-shadow:var(--shadow)">
+        <div style="font-size:1.3rem;margin-bottom:.4rem">⚡</div>
+        <div style="font-weight:700;font-size:.9rem;margin-bottom:.3rem;color:#fff">Code 分頁 ← 主要工作區</div>
+        <div style="font-size:.8rem;color:rgba(255,255,255,.8)">直接讀寫本機檔案，即時視覺 Diff 審查，並行 Session 管理。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STEPS -->
+<section id="steps">
+  <div class="container">
+    <div class="section-kicker">詳細步驟</div>
+    <h2 class="section-title fade-in">完整開發流程</h2>
+    <p class="section-sub fade-in">點擊展開各步驟的說明與操作細節</p>
+    <div class="steps">
+
+      <!-- Step 1 -->
+      <div class="step-card fade-in" id="s1">
+        <div class="step-header" onclick="tog('s1')">
+          <div class="step-num" style="background:#fdf2ee;color:var(--brand)">1</div>
+          <div class="step-meta">
+            <div class="step-title">下載與安裝 Desktop App</div>
+            <div class="step-desc">官方安裝檔 · macOS / Windows · 首次登入</div>
+          </div>
+          <div class="step-caret">▼</div>
+        </div>
+        <div class="step-body">
+          <div class="info info-amber">
+            <strong>⚠️ 系統需求</strong>
+            <ul>
+              <li>macOS：通用版（Intel + Apple Silicon）</li>
+              <li>Windows：x64 或 ARM64（不支援 Linux，Linux 請用 CLI 版）</li>
+              <li>帳號：Claude Pro($20/月)以上，或 Max / Team / Enterprise</li>
+            </ul>
+          </div>
+          <p>安裝步驟：</p>
+          <ol>
+            <li>前往 <strong>https://claude.com/download</strong> 下載對應平台的安裝檔</li>
+            <li>執行安裝程式，從 Applications（macOS）或開始選單（Windows）啟動</li>
+            <li>登入 Claude 帳號</li>
+            <li>點擊頂部中央的 <strong>Code</strong> 分頁</li>
+            <li><strong>Windows 使用者</strong>：若 Code 分頁無法開啟，需先安裝 <a href="https://git-scm.com/downloads/win" style="color:var(--brand)">Git for Windows</a>，安裝後重啟 App</li>
+          </ol>
+          <div class="info info-green">
+            <strong>✅ Desktop App 內建 Claude Code</strong>
+            <p>不需要另外安裝 Node.js 或 CLI。若你也想從終端機使用 claude 指令，才需要另行安裝 CLI 版。</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step-card fade-in" id="s2">
+        <div class="step-header" onclick="tog('s2')">
+          <div class="step-num" style="background:var(--green2);color:var(--green)">2</div>
+          <div class="step-meta">
+            <div class="step-title">開啟第一個 Session</div>
+            <div class="step-desc">選擇環境 · 選擇資料夾 · 授權模式</div>
+          </div>
+          <div class="step-caret">▼</div>
+        </div>
+        <div class="step-body">
+          <p>進入 Code 分頁後，在輸入框上方依序設定四個項目，再輸入任務：</p>
+          <div class="tbl-wrap">
+            <table class="tbl">
+              <tr><th>設定項目</th><th>建議選擇</th><th>說明</th></tr>
+              <tr><td>執行環境</td><td><code>Local</code></td><td>直接使用本機檔案，教材開發選此項</td></tr>
+              <tr><td>專案資料夾</td><td>你的教材目錄</td><td>點擊 Select folder 選擇</td></tr>
+              <tr><td>模型</td><td>Sonnet（預設）</td><td>Session 中可隨時切換</td></tr>
+              <tr><td>授權模式</td><td><code>Ask</code>（預設）</td><td>每次修改都要你確認，初學者推薦</td></tr>
+            </table>
+          </div>
+          <p>選擇授權模式（Permission Mode）— 可依作業需求隨時切換：</p>
+          <div class="mode-tabs">
+            <div class="mode-tab active" onclick="switchMode('ask',this)">Ask（預設）</div>
+            <div class="mode-tab" onclick="switchMode('auto',this)">Auto Accept</div>
+            <div class="mode-tab" onclick="switchMode('plan',this)">Plan</div>
+          </div>
+          <div class="mode-content active" id="mode-ask">
+            <div class="info info-brand">
+              <strong>🔍 Ask 模式（建議初學者使用）</strong>
+              <p>Claude 每次修改檔案都需要你確認。會顯示 Diff 視圖，你可以逐行接受或拒絕。如果拒絕，Claude 會詢問你希望如何調整。<strong>你的檔案在你按下 Accept 之前不會被修改。</strong></p>
+            </div>
+          </div>
+          <div class="mode-content" id="mode-auto">
+            <div class="info info-amber">
+              <strong>⚡ Auto Accept Edits 模式</strong>
+              <p>Claude 自動接受所有檔案修改，無需逐一確認。適合快速迭代、微小調整，或你已充分了解 Claude 在做什麼的情況下使用。仍可隨時打斷 Claude。</p>
+            </div>
+          </div>
+          <div class="mode-content" id="mode-plan">
+            <div class="info info-blue">
+              <strong>🗺️ Plan 模式</strong>
+              <p>Claude 只規劃、不修改任何檔案。適合複雜任務開始前，先審查 Claude 的執行計畫，確認方向正確後再切換到 Ask 或 Auto 模式執行。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step-card fade-in" id="s3">
+        <div class="step-header" onclick="tog('s3')">
+          <div class="step-num" style="background:var(--blue2);color:var(--blue)">3</div>
+          <div class="step-meta">
+            <div class="step-title">建立 CLAUDE.md 專案記憶</div>
+            <div class="step-desc">最關鍵步驟 · GUI 操作 · 範本可直接使用</div>
+          </div>
+          <div class="step-caret">▼</div>
+        </div>
+        <div class="step-body">
+          <p>在 Code 分頁的輸入框中輸入以下內容，讓 Claude 幫你建立 CLAUDE.md：</p>
+          <div class="code-wrap">
+            <div class="code-head">
+              <div class="code-dots"><span class="cd cd-r"></span><span class="cd cd-y"></span><span class="cd cd-g"></span></div>
+              <span class="code-lang">Code 分頁輸入框</span>
+              <button class="copy-btn" onclick="copyCode(this)">複製</button>
+            </div>
+            <pre><span class="ct">請幫我建立 CLAUDE.md，說明以下專案規範：
+1. 本專案為國小自然科互動教材，基於 108 課綱
+2. 使用純 HTML5 + CSS3 + Vanilla JavaScript
+3. 輸出為單一 .html 檔案，不依賴任何外部資源
+4. 所有文字使用繁體中文，程式碼註解也用中文
+5. 適合 8-12 歲學生，按鈕至少 44px，支援觸控操作</span></pre>
+          </div>
+          <p>Claude 生成後，在 Diff 視圖中確認內容後按 <strong>Accept</strong> 建立檔案。</p>
+          <div class="info info-green">
+            <strong>💡 為什麼這是最關鍵步驟？</strong>
+            <p>CLAUDE.md 是 Claude Code 的「永久記憶」。每次開啟新 Session 時都會自動讀取，讓 Claude 始終了解你的技術規範與目標對象，不需要每次重新說明。</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="step-card fade-in" id="s4">
+        <div class="step-header" onclick="tog('s4')">
+          <div class="step-num" style="background:var(--amber2);color:var(--amber)">4</div>
+          <div class="step-meta">
+            <div class="step-title">生成互動教材</div>
+            <div class="step-desc">提示語範本 · 視覺 Diff 審查 · 即時預覽</div>
+          </div>
+          <div class="step-caret">▼</div>
+        </div>
+        <div class="step-body">
+          <p>在 Code 分頁輸入教材需求，Claude 會自動生成 HTML 檔案並等候你的 Diff 審查：</p>
+          <div class="code-wrap">
+            <div class="code-head">
+              <div class="code-dots"><span class="cd cd-r"></span><span class="cd cd-y"></span><span class="cd cd-g"></span></div>
+              <span class="code-lang">基本範本</span>
+              <button class="copy-btn" onclick="copyCode(this)">複製</button>
+            </div>
+            <pre><span class="ct">請幫我設計互動教材 index.html，主題是「植物的光合作用」，
+適合國小四年級學生。
+
+需求：
+1. 頂部：動畫展示光合作用過程（陽光 + 水 + CO₂ → 氧氣 + 葡萄糖）
+2. 中間：可點擊的葉片示意圖，點擊不同部位顯示說明
+3. 下方：5 題互動測驗，選擇後立即顯示對錯與解說
+4. 全部繁體中文，溫暖的黃綠色系，卡通風格
+5. 單一 HTML 檔案，不需要外部資源</span></pre>
+          </div>
+          <div class="info info-brand">
+            <strong>🔍 生成後如何使用 Diff 視圖</strong>
+            <ul>
+              <li>生成完成後，點擊輸入框旁的 <code>+N -N</code> 指示器開啟 Diff 視圖</li>
+              <li>綠色行 = 新增內容，紅色行 = 刪除內容</li>
+              <li>逐檔案審查，確認後按 <strong>Accept</strong>（或 <strong>Reject</strong> 並告訴 Claude 如何改）</li>
+              <li>點擊 <strong>Review code</strong> 讓 Claude 自我審查，添加行內建議</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="step-card fade-in" id="s5">
+        <div class="step-header" onclick="tog('s5')">
+          <div class="step-num" style="background:var(--green2);color:var(--green)">5</div>
+          <div class="step-meta">
+            <div class="step-title">迭代優化 · 並行 Session</div>
+            <div class="step-desc">持續修改 · 多單元並行開發</div>
+          </div>
+          <div class="step-caret">▼</div>
+        </div>
+        <div class="step-body">
+          <p>常見迭代對話（直接在輸入框輸入，不需要指令）：</p>
+          <div class="code-wrap">
+            <div class="code-head">
+              <div class="code-dots"><span class="cd cd-r"></span><span class="cd cd-y"></span><span class="cd cd-g"></span></div>
+              <span class="code-lang">Code 分頁對話範例</span>
+            </div>
+            <pre><span class="ct">動畫速度太快，請調慢到原來的一半
+測驗解說太簡短，每題加入 2-3 句詳細說明
+在頁面頂部加入「回首頁」按鈕，連結 ../index.html
+確認所有 CSS 動畫加入 -webkit- 前綴，相容 Safari</span></pre>
+          </div>
+          <p>使用並行 Session 同時開發多個教材單元：</p>
+          <ol>
+            <li>點擊側邊欄上方的 <strong>+</strong> 新增 Session</li>
+            <li>為新 Session 選擇不同的專案資料夾（如 units/solar-system）</li>
+            <li>各 Session 的 Chat 記錄、修改內容完全獨立不相干</li>
+            <li>在側邊欄快速切換，監控所有 Session 的進度</li>
+          </ol>
+          <div class="info info-blue">
+            <strong>💡 打斷與修正 Claude</strong>
+            <p>若 Claude 正在往錯誤的方向執行，可以隨時點擊停止按鈕，或直接輸入修正意見並按 Enter。Claude 會立刻停止當前操作並根據你的指示調整。</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 6+7 -->
+      <div class="step-card fade-in" id="s6">
+        <div class="step-header" onclick="tog('s6')">
+          <div class="step-num" style="background:var(--blue2);color:var(--blue)">6–7</div>
+          <div class="step-meta">
+            <div class="step-title">Git 版控 + GitHub Pages 部署</div>
+            <div class="step-desc">內建終端機 · 讓 Claude 協助 Git · Pages 上線</div>
+          </div>
+          <div class="step-caret">▼</div>
+        </div>
+        <div class="step-body">
+          <p>可在 Desktop App 的內建終端機中執行 Git，也可直接請 Claude Code 協助：</p>
+          <div class="code-wrap">
+            <div class="code-head">
+              <div class="code-dots"><span class="cd cd-r"></span><span class="cd cd-y"></span><span class="cd cd-g"></span></div>
+              <span class="code-lang">SSH 金鑰設定（首次使用）</span>
+              <button class="copy-btn" onclick="copyCode(this)">複製</button>
+            </div>
+            <pre><span class="cc"># 在 Code 分頁輸入框請 Claude 協助設定</span>
+<span class="ct">請幫我設定 SSH 金鑰連結到 GitHub，</span>
+<span class="ct">我的 GitHub Email 是 your@email.com</span></pre>
+          </div>
+          <div class="code-wrap">
+            <div class="code-head">
+              <div class="code-dots"><span class="cd cd-r"></span><span class="cd cd-y"></span><span class="cd cd-g"></span></div>
+              <span class="code-lang">首次推送（請 Claude 操作）</span>
+              <button class="copy-btn" onclick="copyCode(this)">複製</button>
+            </div>
+            <pre><span class="ct">請幫我：
+1. 初始化 Git 倉庫並建立 .gitignore
+2. 建立首次 commit
+3. 連結到 github.com:USERNAME/REPO.git
+4. 推送到 main 分支</span></pre>
+          </div>
+          <div class="info info-green">
+            <strong>🌐 啟用 GitHub Pages</strong>
+            <ul>
+              <li>倉庫 → Settings → Pages</li>
+              <li>Source：Deploy from a branch，Branch：main，目錄：/ (root)</li>
+              <li>Save → 等 1-3 分鐘</li>
+              <li>網址：https://USERNAME.github.io/REPO-NAME/</li>
+            </ul>
+          </div>
+          <div class="code-wrap">
+            <div class="code-head">
+              <div class="code-dots"><span class="cd cd-r"></span><span class="cd cd-y"></span><span class="cd cd-g"></span></div>
+              <span class="code-lang">日後更新</span>
+              <button class="copy-btn" onclick="copyCode(this)">複製</button>
+            </div>
+            <pre><span class="ct">幫我建立 commit，說明這次更新了光合作用測驗題目，然後推送到 GitHub</span></pre>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- PROMPT BUILDER -->
+<section id="prompt" style="background:var(--bg2)">
+  <div class="container">
+    <div class="section-kicker">提示語工具</div>
+    <h2 class="section-title fade-in">互動教材提示語產生器</h2>
+    <p class="section-sub fade-in">填入資訊，產生可直接貼入 Code 分頁輸入框的提示語</p>
+    <div class="pb fade-in">
+      <div class="pb-title">⚙ 教材設定</div>
+      <div class="pb-row">
+        <div class="pb-group">
+          <label>單元主題</label>
+          <input type="text" id="pbTopic" placeholder="例：太陽系的行星" oninput="buildPB()">
+        </div>
+        <div class="pb-group">
+          <label>適用年級</label>
+          <select id="pbGrade" onchange="buildPB()">
+            <option value="一、二">一、二年級（6-8 歲）</option>
+            <option value="三、四" selected>三、四年級（8-10 歲）</option>
+            <option value="五、六">五、六年級（10-12 歲）</option>
+          </select>
+        </div>
+        <div class="pb-group">
+          <label>測驗題數</label>
+          <select id="pbQuiz" onchange="buildPB()">
+            <option value="3">3 題</option>
+            <option value="5" selected>5 題</option>
+            <option value="8">8 題</option>
+          </select>
+        </div>
+      </div>
+      <div class="pb-row">
+        <div class="pb-group">
+          <label>色彩風格</label>
+          <select id="pbColor" onchange="buildPB()">
+            <option value="溫暖的黃綠色系，卡通風格">溫暖黃綠（自然科學）</option>
+            <option value="天藍色系，清爽風格">清爽天藍（地球科學）</option>
+            <option value="橘紅色系，活潑動感">活潑橘紅（物理）</option>
+            <option value="深藍紫色系，宇宙星空風格">神秘星空（天文）</option>
+          </select>
+        </div>
+        <div class="pb-group">
+          <label>主要互動方式</label>
+          <select id="pbIA" onchange="buildPB()">
+            <option value="點擊探索：點擊圖示不同部位顯示說明">點擊探索</option>
+            <option value="拖曳配對：將名稱拖曳到對應位置">拖曳配對</option>
+            <option value="動畫展示：自動播放過程並可暫停控制">動畫展示</option>
+            <option value="模擬實驗：調整變因觀察結果變化">模擬實驗</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom:.9rem">
+        <label style="display:block;font-size:.73rem;color:var(--ink3);margin-bottom:5px;font-weight:500">額外功能</label>
+        <div class="pb-checks">
+          <label class="pb-check"><input type="checkbox" id="cbRwd" checked onchange="buildPB()">RWD 響應式</label>
+          <label class="pb-check"><input type="checkbox" id="cbTouch" checked onchange="buildPB()">觸控友善(44px)</label>
+          <label class="pb-check"><input type="checkbox" id="cbSvg" checked onchange="buildPB()">SVG 嵌入圖示</label>
+          <label class="pb-check"><input type="checkbox" id="cbSafari" onchange="buildPB()">Safari 相容</label>
+          <label class="pb-check"><input type="checkbox" id="cbSound" onchange="buildPB()">音效回饋</label>
+          <label class="pb-check"><input type="checkbox" id="cbProgress" onchange="buildPB()">進度追蹤</label>
+        </div>
+      </div>
+      <div class="pb-output" id="pbOut">請填入上方資訊，提示語會自動出現在這裡…</div>
+      <div class="pb-footer">
+        <button class="btn-brand" onclick="copyPB()">複製提示語</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CHECKLIST -->
+<section>
+  <div class="container">
+    <div class="section-kicker">準備檢查</div>
+    <h2 class="section-title fade-in">部署前確認清單</h2>
+    <p class="section-sub fade-in">點擊項目可勾選完成狀態</p>
+    <div class="step-card fade-in" style="padding:1.1rem 1.4rem">
+      <ul class="cl" id="checklist">
+        <li onclick="clk(this)"><div class="cl-box done">✓</div><span>Desktop App 已安裝，可從 Applications / 開始選單啟動</span></li>
+        <li onclick="clk(this)"><div class="cl-box"></div><span>Code 分頁可正常開啟（未被要求升級）</span></li>
+        <li onclick="clk(this)"><div class="cl-box"></div><span>已選擇正確的本機專案資料夾（Select folder）</span></li>
+        <li onclick="clk(this)"><div class="cl-box"></div><span>CLAUDE.md 已建立並包含技術規範（純 HTML、繁體中文等）</span></li>
+        <li onclick="clk(this)"><div class="cl-box"></div><span>互動教材 HTML 在 Diff 視圖中已確認並 Accept</span></li>
+        <li onclick="clk(this)"><div class="cl-box"></div><span>教材在瀏覽器中可正常顯示，互動功能測試通過</span></li>
+        <li onclick="clk(this)"><div class="cl-box"></div><span>在手機 / 平板測試 RWD 排版正常</span></li>
+        <li onclick="clk(this)"><div class="cl-box"></div><span>SSH 金鑰已設定，GitHub 連線測試成功</span></li>
+        <li onclick="clk(this)"><div class="cl-box"></div><span>程式碼已推送到 GitHub（git push 成功）</span></li>
+        <li onclick="clk(this)"><div class="cl-box"></div><span>GitHub Pages 已啟用，教材網址可正常開啟</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- QUICK REF -->
+<section id="quickref" style="background:var(--bg2)">
+  <div class="container">
+    <div class="section-kicker">快速參考</div>
+    <h2 class="section-title fade-in">Desktop App 操作速查</h2>
+    <p class="section-sub fade-in">Code 分頁常用操作與快速鍵</p>
+    <div class="cmd-grid fade-in">
+      <div class="cmd-card"><div class="cmd">Enter</div><div class="desc">送出訊息給 Claude</div></div>
+      <div class="cmd-card"><div class="cmd">停止按鈕 / 直接輸入</div><div class="desc">隨時打斷 Claude 並修正方向</div></div>
+      <div class="cmd-card"><div class="cmd">@filename</div><div class="desc">引用特定檔案內容到對話</div></div>
+      <div class="cmd-card"><div class="cmd">/ 或點擊 +</div><div class="desc">瀏覽 Skills 與 Slash 指令</div></div>
+      <div class="cmd-card"><div class="cmd">+N -N 指示器</div><div class="desc">點擊開啟視覺 Diff 審查</div></div>
+      <div class="cmd-card"><div class="cmd">側邊欄 +</div><div class="desc">新增並行 Session</div></div>
+      <div class="cmd-card"><div class="cmd">模式選擇器</div><div class="desc">切換 Ask / Auto / Plan 授權模式</div></div>
+      <div class="cmd-card"><div class="cmd">Review code</div><div class="desc">讓 Claude 自我審查 Diff 並留建議</div></div>
+      <div class="cmd-card"><div class="cmd">Remote 環境</div><div class="desc">雲端 Session，App 關閉後仍持續</div></div>
+      <div class="cmd-card"><div class="cmd">SSH 環境</div><div class="desc">連線到你管理的遠端伺服器</div></div>
+      <div class="cmd-card"><div class="cmd">Menu → Help → Check for Updates</div><div class="desc">手動更新 Desktop App</div></div>
+      <div class="cmd-card"><div class="cmd">Settings → General</div><div class="desc">啟用 Computer use（預覽功能）</div></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p>Claude Code Desktop 互動教材開發指南 · 2026 年版</p>
+    <p style="margin-top:.4rem">
+      <a href="https://claude.com/download" target="_blank">下載 App</a> &nbsp;·&nbsp;
+      <a href="https://code.claude.com/docs/en/desktop-quickstart" target="_blank">入門文件</a> &nbsp;·&nbsp;
+      <a href="https://code.claude.com/docs/en/desktop" target="_blank">完整參考</a> &nbsp;·&nbsp;
+      <a href="https://support.claude.com" target="_blank">支援中心</a>
+    </p>
+  </div>
+</footer>
+
+<script>
+// accordion
+function tog(id) {
+  const c = document.getElementById(id);
+  c.classList.toggle('open');
+}
+
+// mode tabs
+function switchMode(id, el) {
+  document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.mode-content').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('mode-' + id).classList.add('active');
+}
+
+// copy code
+function copyCode(btn) {
+  const text = btn.closest('.code-wrap').querySelector('pre').innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '已複製 ✓'; btn.classList.add('ok');
+    setTimeout(() => { btn.textContent = '複製'; btn.classList.remove('ok'); }, 2000);
+  });
+}
+
+// prompt builder
+function buildPB() {
+  const topic = document.getElementById('pbTopic').value.trim() || '[單元主題]';
+  const grade = document.getElementById('pbGrade').value;
+  const quiz  = document.getElementById('pbQuiz').value;
+  const color = document.getElementById('pbColor').value;
+  const ia    = document.getElementById('pbIA').value;
+  const extras = [];
+  if (document.getElementById('cbRwd').checked)      extras.push('RWD 響應式，支援手機（375px）與平板（768px）');
+  if (document.getElementById('cbTouch').checked)    extras.push('所有按鈕至少 44px，觸控友善');
+  if (document.getElementById('cbSvg').checked)      extras.push('所有圖示使用 SVG 直接嵌入，不依賴外部圖片');
+  if (document.getElementById('cbSafari').checked)   extras.push('CSS 動畫加入 -webkit- 前綴，相容 Safari');
+  if (document.getElementById('cbSound').checked)    extras.push('答題時有音效回饋（使用 Web Audio API）');
+  if (document.getElementById('cbProgress').checked) extras.push('顯示學習進度（完成度百分比）');
+
+  let out = `請幫我設計互動教材 index.html，主題是「${topic}」，
+適合國小${grade}年級學生使用。
+
+需求：
+1. 頁面頂部：動畫展示「${topic}」的核心概念
+2. 中間區域：${ia}
+3. 下方：${quiz} 題互動測驗，選擇後立即顯示對錯與解說
+4. 全部繁體中文，使用${color}
+5. 輸出為單一 HTML 檔案，不需要外部資源`;
+  if (extras.length) {
+    out += '\n\n額外需求：';
+    extras.forEach((e, i) => { out += `\n${i + 6}. ${e}`; });
+  }
+  document.getElementById('pbOut').textContent = out;
+}
+buildPB();
+
+function copyPB() {
+  navigator.clipboard.writeText(document.getElementById('pbOut').textContent).then(() => {
+    const btn = event.target;
+    btn.textContent = '已複製 ✓';
+    setTimeout(() => { btn.textContent = '複製提示語'; }, 2000);
+  });
+}
+
+// checklist
+function clk(li) {
+  const box = li.querySelector('.cl-box');
+  const done = box.classList.toggle('done');
+  box.textContent = done ? '✓' : '';
+  li.classList.toggle('done', done);
+}
+// pre-check first
+clk(document.querySelector('.cl li'));
+
+// scroll reveal
+const obs = new IntersectionObserver(entries =>
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('v'); }),
+  { threshold: 0.1 }
+);
+document.querySelectorAll('.fade-in').forEach(el => obs.observe(el));
+</script>
+</body>
+</html>
